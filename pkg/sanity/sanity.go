@@ -49,6 +49,7 @@ type CSISecrets struct {
 	CreateSnapshotSecret                       map[string]string `yaml:"CreateSnapshotSecret"`
 	DeleteSnapshotSecret                       map[string]string `yaml:"DeleteSnapshotSecret"`
 	ControllerExpandVolumeSecret               map[string]string `yaml:"ControllerExpandVolumeSecret"`
+	ListSnapshotsSecret                        map[string]string `yaml:"ListSnapshotsSecret"`
 }
 
 // Config provides the configuration for the sanity tests. It
