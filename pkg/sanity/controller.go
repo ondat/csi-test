@@ -1621,9 +1621,14 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 	})
 
 	It("should return appropriate values (no optional values added)", func() {
+		req := &csi.ListSnapshotsRequest{}
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
+
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 
@@ -1644,9 +1649,14 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 		snapshot, err := c.CreateSnapshot(context.Background(), snapshotReq)
 		Expect(err).NotTo(HaveOccurred())
 
+		req := &csi.ListSnapshotsRequest{SnapshotId: snapshot.GetSnapshot().GetSnapshotId()})
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
+
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{SnapshotId: snapshot.GetSnapshot().GetSnapshotId()})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		Expect(len(snapshots.GetEntries())).To(BeNumerically("==", 1))
@@ -1665,10 +1675,14 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 	})
 
 	It("should return empty when the specified snapshot id does not exist", func() {
+		req := &csi.ListSnapshotsRequest{SnapshotId: "none-exist-id"})
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
 
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{SnapshotId: "none-exist-id"})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		Expect(snapshots.GetEntries()).To(BeEmpty())
@@ -1686,9 +1700,14 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 		snapshot, err := c.CreateSnapshot(context.Background(), snapshotReq)
 		Expect(err).NotTo(HaveOccurred())
 
+		req := &csi.ListSnapshotsRequest{SourceVolumeId: snapshot.GetSnapshot().GetSourceVolumeId()})
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
+
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{SourceVolumeId: snapshot.GetSnapshot().GetSourceVolumeId()})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		for _, snap := range snapshots.GetEntries() {
@@ -1708,20 +1727,29 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 	})
 
 	It("should return empty when the specified source volume id does not exist", func() {
+		req := &csi.ListSnapshotsRequest{SourceVolumeId: "none-exist-volume-id"})
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
 
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{SourceVolumeId: sc.Config.IDGen.GenerateUniqueValidVolumeID()})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		Expect(snapshots.GetEntries()).To(BeEmpty())
 	})
 
 	It("check the presence of new snapshots in the snapshot list", func() {
+		req := &csi.ListSnapshotsRequest{}
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
+
 		// List Snapshots before creating new snapshots.
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 
@@ -1741,7 +1769,7 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 
 		snapshots, err = c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		Expect(len(snapshots.GetEntries())).To(Equal(totalSnapshots + 1))
@@ -1759,7 +1787,7 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 		// List snapshots and check if the deleted snapshot exists in the snapshot list.
 		snapshots, err = c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 		Expect(len(snapshots.GetEntries())).To(Equal(totalSnapshots))
@@ -1775,10 +1803,15 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 		// is used to verify that all the snapshots have been listed.
 		currentTotalSnapshots := 0
 
+		req := &csi.ListSnapshotsRequest{}
+		if sc.Secrets != nil {
+			req.Secrets = sc.Secrets.ListSnapshotsSecret
+		}
+
 		// Get the number of existing volumes.
 		snapshots, err := c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 
@@ -1813,12 +1846,12 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 			currentTotalSnapshots += requiredSnapshots
 		}
 
+
 		// Request list snapshots with max entries maxEntries.
+		req.MaxEntries = int32(maxEntries)
 		snapshots, err = c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{
-				MaxEntries: int32(maxEntries),
-			})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 
@@ -1827,11 +1860,10 @@ var _ = DescribeSanity("ListSnapshots [Controller Server]", func(sc *SanityConte
 		Expect(len(snapshots.GetEntries())).To(Equal(maxEntries))
 
 		// Request list snapshots with starting_token and no max entries.
+		req.StartingToken = nextToken
 		snapshots, err = c.ListSnapshots(
 			context.Background(),
-			&csi.ListSnapshotsRequest{
-				StartingToken: nextToken,
-			})
+			req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshots).NotTo(BeNil())
 
